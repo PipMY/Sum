@@ -1,25 +1,25 @@
-CC=gcc
-CFLAGS=-std=c11 -Wall -Wextra -pedantic -fPIC -O2 -pthread
-LDFLAGS_SHARED=-shared
+CCOMP     = gcc
+FLAGS     = -std=c11 -Wall -Wextra -pedantic -O2 -fPIC
+SHLIBOPT  = -shared
 
-all: liballocator.so runme
+all: libmem.so demo
 
-allocator.o: allocator.c allocator.h
-	$(CC) $(CFLAGS) -c allocator.c -o allocator.o
+core.obj: allocator.c allocator.h
+	$(CCOMP) $(FLAGS) -c allocator.c -o core.obj
 
-liballocator.so: allocator.o
-	$(CC) $(LDFLAGS_SHARED) -o liballocator.so allocator.o -pthread
+libmem.so: core.obj
+	$(CCOMP) $(SHLIBOPT) -o libmem.so core.obj
 
-runme.o: runme.c allocator.h
-	$(CC) $(CFLAGS) -c runme.c -o runme.o
+demo.obj: runme.c allocator.h
+	$(CCOMP) $(FLAGS) -c runme.c -o demo.obj
 
-runme: runme.o allocator.o
-	$(CC) -o runme runme.o allocator.o -pthread
+demo: demo.obj core.obj
+	$(CCOMP) -o demo demo.obj core.obj
 
-.PHONY: test clean runme
+.PHONY: test clean demo
 
-test: runme
-	./runme --size 32768 --storm 10 --seed 1
+test: demo
+	./demo --size 40960 --storm 4 --seed 99
 
 clean:
-	rm -f *.o liballocator.so runme
+	rm -f *.obj libmem.so demo
